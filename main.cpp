@@ -543,6 +543,7 @@ void newFall(){
 		 }
 		 Drop:
 		//if harddrop button is pressed make block fall down fast.
+		//possible improvements to harddrop
 		 if (harddrop)
 		 {
 			drawobject(x,y,false,Currentmodel);
