@@ -14,8 +14,7 @@
 #define Rotate 0xFB
 #define HardDrop 0xF7
 
-
-    int sideways;
+	int sideways;
 	bool gameOver = 0;
 	int x,y;
 	int score = 0;
@@ -317,7 +316,6 @@ void displaydigit (int digit[7][2],int rows){
 	}
 	digitcounter++;
 	
-
 }
 void gameover(){
 	setWriteRange(0,7,0,127);
@@ -395,46 +393,38 @@ void gameover(){
 		}
         score /= 10;    
     }
-
-
 }
 
 //returns true if next move is collision
 void drawobject(int x ,int y,bool draw,int model[4][2]){
 	if (draw)
 	{
-		
-			for (size_t i = 0; i < 4; i++)
-			{
-				drawblock(x+model[i][0],y+model[i][1]);
-			}					
+		for (size_t i = 0; i < 4; i++)
+		{
+			drawblock(x+model[i][0],y+model[i][1]);
+		}					
 	}else
 	{
-			for (size_t i = 0; i < 4; i++)
-			{
-				clearblock(x+model[i][0],y+model[i][1]);
-			}
-	}
-
-				
-	
+		for (size_t i = 0; i < 4; i++)
+		{
+			clearblock(x+model[i][0],y+model[i][1]);
+		}
+	}	
 }
 
-bool checkcollisonobject(int x ,int y,int model[4][2]){
-
-		
-			for (size_t i = 0; i < 4; i++)
-			{
-				if (checkblock(x+model[i][0],y+model[i][1]))
-				{
-					return true;
-				}
+bool checkcollisonobject(int x ,int y,int model[4][2])
+{
+	for (size_t i = 0; i < 4; i++)
+	{
+		if (checkblock(x+model[i][0],y+model[i][1]))
+		{
+			return true;
+	        }
 				
-			}	
-			return false;				
-	
-
+	}	
+	return false;				
 }
+
 void clearRow(int row){
 	for (size_t i = 0; i < 14; i++)
 	{
@@ -459,13 +449,10 @@ bool IsRowFull(int row){
 		if (!checkblock(4+4*i,6+4*row))
 		{
 			return false;
-		}
-		
+		}		
 	}
 	return true;	
 }
-
-
 
 void checkAndClearFullRow(int rowstart,int rowend){
 	for (size_t i = rowstart; i < rowend; i++)
@@ -479,39 +466,56 @@ void checkAndClearFullRow(int rowstart,int rowend){
 				moveRowDown(k);
 				updatesection();	
 			}
-			i-=1;
-			
-		}
-		
-	}
-	
+			i-=1;			
+		}	
+	}	
 }
 
 void rotateCurrentModel(){
-   
-			int temparray[4][2] = {};
-			copyArrayTo(Currentmodel,temparray);
-			for (size_t i = 0; i < 4; i++)
-			{
-				
-				int tempx=temparray[i][0];
-				int tempy=temparray[i][1];
+	int temparray[4][2] = {};
+	copyArrayTo(Currentmodel,temparray);
+	for (size_t i = 0; i < 4; i++)
+	{				
+		int tempx=temparray[i][0];
+		int tempy=temparray[i][1];
+		temparray[i][0]= roundf((tempx*cos((rotationdegrees * M_PI) / 180)) - tempy*sin((rotationdegrees * M_PI) / 180));
+		temparray[i][1]=roundf(tempx*sin((rotationdegrees * M_PI) / 180)+ tempy*cos((rotationdegrees * M_PI) / 180));
+	}
 
-				temparray[i][0]= roundf((tempx*cos((rotationdegrees * M_PI) / 180)) - tempy*sin((rotationdegrees * M_PI) / 180));
-				temparray[i][1]=roundf(tempx*sin((rotationdegrees * M_PI) / 180)+ tempy*cos((rotationdegrees * M_PI) / 180));
-			}
-
-			if (!checkcollisonobject(x,y,temparray))
-			{
-				copyArrayTo(temparray,Currentmodel);
-			}
-			
+	if (!checkcollisonobject(x,y,temparray))
+	{
+		copyArrayTo(temparray,Currentmodel);
+	}			
 }
+
+void rotate(){
+	drawobject(x,y,false,Currentmodel);	
+	rotateCurrentModel();
+	drawobject(x,y,true,Currentmodel);
+	updatesection();				
+	rotate = false;
+}
+
+void movesideways(){
+	drawobject(x,y,false,Currentmodel);	
+	x= x+sideways;
+	drawobject(x,y,true,Currentmodel);
+	if (sideways+highestchangedx < 64 &&  sideways+lowestchangedx >-4  )
+	{
+	updatesection();				
+	} else
+	{
+	drawobject(x,y,false,Currentmodel);	
+	x= x-sideways;
+	drawobject(x,y,true,Currentmodel);
+	}
+	sideways = 0;
+}
+
 void newFall(){
 	rotationdegrees = 0;
    	x =28;
-	y =114; //110
-	//harddrop f?rb?ttras
+	y =114; 
 	harddrop = false;
 	bool collision = 0;
 	while(!collision){
@@ -519,44 +523,26 @@ void newFall(){
 	{
 		drawobject(x,y,true,Currentmodel);
 		updatesection();
-	     for (size_t i = 0; i < 30; i++)
-		 {
-			 if (harddrop)
-			 {
+		for (size_t i = 0; i < 30; i++)
+		{
+			if (harddrop)
+			{
 				goto Drop;
-			 }
+			}
 			 
-				if (rotate)
+			if (rotate)
 			{
-				drawobject(x,y,false,Currentmodel);	
-				rotateCurrentModel();
-				drawobject(x,y,true,Currentmodel);
-				updatesection();				
-				rotate = false;
-			
+				rotate();
 			}
 			
-		
-			if(sideways != 0){
-				drawobject(x,y,false,Currentmodel);	
-				x= x+sideways;
-				drawobject(x,y,true,Currentmodel);
-			if (sideways+highestchangedx < 64 &&  sideways+lowestchangedx >-4  )
+			if(sideways != 0)
 			{
-
-				updatesection();				
-			} else
-			{
-				drawobject(x,y,false,Currentmodel);	
-				x= x-sideways;
-				drawobject(x,y,true,Currentmodel);
-			}
-			
-			sideways = 0;
+				movesideways();
 			}		
 			_delay_ms(10); 
 		 }
 		 Drop:
+		//if harddrop button is pressed make block fall down fast.
 		 if (harddrop)
 		 {
 			drawobject(x,y,false,Currentmodel);
@@ -565,20 +551,22 @@ void newFall(){
 				y-=4;
 			} while (!checkcollisonobject(x,y,Currentmodel));			
 			harddrop = false;
-		
 		 }
+		
 		 else
 		 {
 			drawobject(x,y,false,Currentmodel); 	  
-		    y-=4;
-		 }
-		 			
+		 	y-=4;
+		 }		
 	}else
 	{
+		//collision happend draw block at last position and continue to next fall
 		drawobject(x,y+4,true,Currentmodel);
 		collision = true;
 		score += 1;
 		updatesection();
+		
+		//checking if blocks exist on the top if so end game
 			for (size_t i = 0; i < 14; i++)
 		{
 			if (checkblock(4+4*i,114))
@@ -588,6 +576,7 @@ void newFall(){
 			}
 		
 		}
+		//checking if row where block is placed if full if so clear it
 		if (y < 16)
 		{
 			checkAndClearFullRow(0,(y/4));
@@ -596,18 +585,13 @@ void newFall(){
 			checkAndClearFullRow((y/4)-4,(y/4));
 		}
 
-		updatesection();
-		
+		updatesection();	
 	}
-	
 	}
 }
 
-void gameLoop(){
-
-		
+void gameLoop(){	
 	while(!gameOver){
-		
 		//spawn object in top middle
 		switch (rand() % 5)
 		{
@@ -626,16 +610,11 @@ void gameLoop(){
 		case 4:
 		copyArrayTo(shipModel,Currentmodel);
 			break;
-		
 		}
 		newFall();
-
-	
 	}
 	gameover();
 	//make object fall untill collision
-
-
 }
 
 	
@@ -657,18 +636,14 @@ ISR (PCINT0_vect){
 		harddrop = true;
 		break;
 	}
-
 }
-
    
 int main()
  { 
     
     PORTB |= (1 << PB2);
     PORTB &= ~(1 << PB2);
-    PORTB |= (1 << PB2);
-	
-    
+    PORTB |= (1 << PB2);  
     spi_init();
 
 	DDRA = 0x00;
@@ -678,7 +653,7 @@ int main()
     EICRA |= (1<<ISC10);
     PCICR |= (1<<PCIE0);
     PCMSK0 =0xFF;
-    _delay_ms(50);
+	_delay_ms(50);
 	sei();
 
     spi_writeCmd(0x20);
@@ -686,12 +661,7 @@ int main()
     spi_writeCmd(0xAF);
 
 	drawBorder();	
-
-	
 	updatesection();
 	gameLoop();
 	updatesection();
-
-     
  }
- 
