@@ -126,17 +126,8 @@ int nine[7][2] ={  // 5x4
 	{1,-2},{2,-2},{2,-3},{2,-4}
 };
 
-
-
-
-
 static uint8_t frameBuffer[1024] = {};
 
-void positionsToData(int x,int y){
-   //example with x and y = 0
-
-
-}
  void spi_writeCmd (uint8_t temp)
 {      
    PORTB &= ~(1 << PB3);
@@ -150,8 +141,6 @@ void positionsToData(int x,int y){
 	SPDR = temp;
 	while(!(SPSR & (1<<SPIF)));
 }
-
-
 
 void setWriteRange(uint32_t xStart,uint32_t xEnd,uint32_t  yStart, uint32_t yEnd)
 {
@@ -187,8 +176,6 @@ void resetmaxlow(){
 	highestchangedx = 0;
 }
 
-
-
  void togglePixel(int x, int y){
 	 
    int page = (x/8);
@@ -214,8 +201,7 @@ void resetmaxlow(){
 	  {
 		 highestchangedy = y;
 	  }	  	  	  
-	  frameBuffer[(page*128)+y] = (frameBuffer[(page*128)+y]^data); 
-	  
+	  frameBuffer[(page*128)+y] = (frameBuffer[(page*128)+y]^data); 	  
 }
 
  bool checkPixel(int x, int y){
@@ -237,7 +223,6 @@ void resetmaxlow(){
    }  
 }
 
-
 void drawBorder(){
 	for (size_t i = 0; i < 128; i++)
 	{
@@ -253,8 +238,7 @@ void drawBorder(){
 			{
 				togglePixel(4+i,122+k);
 				togglePixel(4+i,0+k);
-			}
-	
+			}	
 		}
 }
 
@@ -293,9 +277,9 @@ void clearblock(int x, int y){
 		{
                   togglePixel(x+i,y+k);	
 		}
-		
 	}
 }
+
 void updatesection(){
 	setWriteRange((lowestchangedx/8),(highestchangedx/8),lowestchangedy,highestchangedy);
 	for (size_t i = (lowestchangedx/8); i <= (highestchangedx/8); i++)
@@ -304,19 +288,18 @@ void updatesection(){
 		{
 			spi_writedata(frameBuffer[i*128+k]);
 		}
-		
 	}
 	resetmaxlow();
-
 }
+
 void displaydigit (int digit[7][2],int rows){
 	for (size_t i = 0; i < rows; i++)
 	{
 		drawblock((48-digitcounter*20)+4*digit[i][0],72+4*digit[i][1]);
 	}
-	digitcounter++;
-	
+	digitcounter++;	
 }
+
 void gameover(){
 	setWriteRange(0,7,0,127);
 	for (size_t i = 0; i < 1024; i++)
