@@ -29,6 +29,8 @@
 	int digitcounter = 0;
 	int Currentmodel[4][2] = {};
 
+// 2d arrays containing the block positions for the tetris blocks
+
 int shipModel[4][2] ={
 	{0,0},{4,0},{-4,0},{0,4}
 };
@@ -44,6 +46,8 @@ int cubeModel[4][2] ={
 int ZModel[4][2] ={
 	{0,0},{-4,0},{0,-4},{4,-4}
 };
+
+// 2d arrays containing the positions of blocks to be able to display digits and letters
 int G[15][2] ={  // 5x4
 	{1,0},{2,0},{3,0},
 	{0,-1},{0,-2},{0,-3},{0,-4},
@@ -126,8 +130,10 @@ int nine[7][2] ={  // 5x4
 	{1,-2},{2,-2},{2,-3},{2,-4}
 };
 
+// framebuffer used to buffer the frames and pull position data
 static uint8_t frameBuffer[1024] = {};
 
+// 4 wire spi functions used to be able to communicate with the ssd1306 display driver using the onboard spi handling.
  void spi_writeCmd (uint8_t temp)
 {      
    PORTB &= ~(1 << PB3);
@@ -141,7 +147,7 @@ static uint8_t frameBuffer[1024] = {};
 	SPDR = temp;
 	while(!(SPSR & (1<<SPIF)));
 }
-
+// functions to set the write range for the display driver
 void setWriteRange(uint32_t xStart,uint32_t xEnd,uint32_t  yStart, uint32_t yEnd)
 {
 			 spi_writeCmd(SETPAGEADDRESS);
@@ -153,6 +159,7 @@ void setWriteRange(uint32_t xStart,uint32_t xEnd,uint32_t  yStart, uint32_t yEnd
 			 spi_writeCmd(yEnd);
 			
 }
+//function used to copy a array to another one
 void copyArrayTo(int Src[5][2],int Dst[5][2]){
 	for (size_t i = 0; i < 5; i++)
 	{
@@ -162,19 +169,21 @@ void copyArrayTo(int Src[5][2],int Dst[5][2]){
 		}		
 	}
 }
-
+// initiates the spi interface.
 void spi_init (void)
-
 {
    DDRB = 0xFF;
 	SPCR |= (1<<SPE | 1<<MSTR );
 }
+//resets the max and low position values keep to figure out the changed section that needs to be updated
+
 void resetmaxlow(){
 	lowestchangedy = 200;
 	lowestchangedx = 200;
 	highestchangedy = 0;
 	highestchangedx = 0;
 }
+//toggle a Pixel on or off, records the position of the changed pixel and updated the frame buffer
 
  void togglePixel(int x, int y){
 	 
@@ -204,6 +213,8 @@ void resetmaxlow(){
 	  frameBuffer[(page*128)+y] = (frameBuffer[(page*128)+y]^data); 	  
 }
 
+//checks if a pixel in the frame buffer is on or off
+
  bool checkPixel(int x, int y){
    int page = (x/8);
    int bitindex = (x%8);
@@ -222,6 +233,7 @@ void resetmaxlow(){
 	  return false;
    }  
 }
+//draws the game border
 
 void drawBorder(){
 	for (size_t i = 0; i < 128; i++)
@@ -242,6 +254,8 @@ void drawBorder(){
 		}
 }
 
+//draws a 4x4 block made up of pixels
+
 bool drawblock(int x, int y){
 
 	for (size_t i = 0; i < 4; i++)
@@ -253,6 +267,7 @@ bool drawblock(int x, int y){
 	}
 	return false;
 }
+
 
 bool checkblock(int x, int y){
 
@@ -279,7 +294,7 @@ void clearblock(int x, int y){
 		}
 	}
 }
-
+// figures out the section of recent changeds and sends the section to be updated on the display
 void updatesection(){
 	setWriteRange((lowestchangedx/8),(highestchangedx/8),lowestchangedy,highestchangedy);
 	for (size_t i = (lowestchangedx/8); i <= (highestchangedx/8); i++)
@@ -299,7 +314,7 @@ void displaydigit (int digit[7][2],int rows){
 	}
 	digitcounter++;	
 }
-
+// displays the gameover screen containing the text "gam over" and the score
 void gameover(){
 	setWriteRange(0,7,0,127);
 	for (size_t i = 0; i < 1024; i++)
@@ -378,7 +393,7 @@ void gameover(){
     }
 }
 
-//returns true if next move is collision
+//draws a tetris block/object with the parameters of position and if it should draw or remove
 void drawobject(int x ,int y,bool draw,int model[4][2]){
 	if (draw)
 	{
@@ -494,7 +509,7 @@ void movesideways(){
 	}
 	sideways = 0;
 }
-
+//function used to instantiate a while loop for a  a new tetris block that falls until collision
 void newFall(){
 	rotationdegrees = 0;
    	x =28;
@@ -544,7 +559,7 @@ void newFall(){
 		 }		
 	}else
 	{
-		//collision happend draw block at last position and continue to next fall
+		//collision happend, draw block at last position and continue to next fall
 		drawobject(x,y+4,true,Currentmodel);
 		collision = true;
 		score += 1;
@@ -598,10 +613,15 @@ void gameLoop(){
 		newFall();
 	}
 	gameover();
-	//make object fall untill collision
+
 }
 
-	
+/*
+handling of the interrupts, interrupts are used as variable changing functions to avoid clashing with the draw and data transfer.
+interrupts change variables depending on what button was pressed and that is used to change the tetris object through a for loop
+checking if a variable has changed or not. this was used to avoid bugs concerning interrupts happenining in the process of data transfer
+or object updates.
+*/	
 ISR (PCINT0_vect){
 	_delay_ms(10); 
 	switch (PINA)
@@ -625,24 +645,24 @@ ISR (PCINT0_vect){
 int main()
  { 
     
-    PORTB |= (1 << PB2);
-    PORTB &= ~(1 << PB2);
-    PORTB |= (1 << PB2);  
-    spi_init();
+    	PORTB |= (1 << PB2);
+    	PORTB &= ~(1 << PB2);
+    	PORTB |= (1 << PB2);  
+    	spi_init();
 
 	DDRA = 0x00;
 	PORTA = 0xFF;
 	DDRA = 0x00;
 
-    EICRA |= (1<<ISC10);
-    PCICR |= (1<<PCIE0);
-    PCMSK0 =0xFF;
+	EICRA |= (1<<ISC10);
+	PCICR |= (1<<PCIE0);
+	PCMSK0 =0xFF;
 	_delay_ms(50);
 	sei();
 
-    spi_writeCmd(0x20);
-    spi_writeCmd(0x00);
-    spi_writeCmd(0xAF);
+	spi_writeCmd(0x20);
+    	spi_writeCmd(0x00);
+    	spi_writeCmd(0xAF);
 
 	drawBorder();	
 	updatesection();
